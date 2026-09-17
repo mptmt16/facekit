@@ -9,7 +9,10 @@ struct TodayView: View {
     @Query(sort: \FaceScan.date, order: .reverse) private var scans: [FaceScan]
     @Query(sort: \BlinkTest.date, order: .reverse) private var blinkTests: [BlinkTest]
     @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
+    @AppStorage(SettingsKey.improvementGoals) private var goalsRaw = ""
 
+    @State private var planRunning = false
+    @State private var editingGoals = false
     @State private var routineRunning = false
     @State private var scanning = false
     @State private var showingSettings = false
@@ -21,6 +24,7 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     header
+                    planCard
                     routineCard
                     statsRow
                     scanCard
@@ -53,6 +57,69 @@ struct TodayView: View {
             .fullScreenCover(isPresented: $scanning) { FaceScanView() }
             .fullScreenCover(isPresented: $playingChallenge) { FaceChallengeView() }
             .fullScreenCover(isPresented: $testingEyes) { BlinkTestView() }
+            .sheet(isPresented: $editingGoals) { GoalsView() }
+        }
+    }
+
+    @ViewBuilder
+    private var planCard: some View {
+        let goals = GoalStore.decode(goalsRaw)
+        let scores = scans.first.map { RegionScorer.scores(for: $0) } ?? []
+        let plan = ImprovementPlan.build(scores: scores, goals: goals)
+
+        if plan.items.isEmpty {
+            if scans.isEmpty && goals.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("What do you want to improve?", systemImage: "target")
+                        .font(.headline)
+                    Text("Pick your goals and FaceFit builds a personal exercise plan. A face scan makes it more precise.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button("Choose goals") { editingGoals = true }
+                        .buttonStyle(.bordered)
+                }
+                .card()
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Your plan for today").font(.title3.bold())
+                        Text(plan.focus.map(\.title).joined(separator: " · "))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button {
+                        editingGoals = true
+                    } label: {
+                        Image(systemName: "target").font(.title2)
+                    }
+                    .foregroundStyle(Theme.warm)
+                }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(plan.items) { item in
+                            Label(item.exercise.name, systemImage: item.exercise.symbol)
+                                .font(.caption)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background((item.region?.color ?? Theme.accent).opacity(0.15), in: Capsule())
+                        }
+                    }
+                }
+                Button("Start my plan · about \(plan.duration.clockString) min") { planRunning = true }
+                    .buttonStyle(PrimaryButtonStyle(color: Theme.warm))
+                if scans.isEmpty {
+                    Text("Based on your goals. Take a face scan to personalise it further.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .card()
+            .fullScreenCover(isPresented: $planRunning) {
+                ExerciseSessionView(exercises: plan.exercises)
+            }
         }
     }
 

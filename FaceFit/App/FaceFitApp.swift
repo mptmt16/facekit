@@ -24,4 +24,6 @@ enum SettingsKey {
     static let reminderMinutes = "reminderMinutes"
     static let challengeHighScore = "challengeHighScore"
     static let challengeGames = "challengeGames"
+    /// Comma-separated FaceRegion raw values.
+    static let improvementGoals = "improvementGoals"
 }

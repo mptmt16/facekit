@@ -15,6 +15,8 @@ struct ScanResultView: View {
         let tension = scan.tension
         let controls = scan.controls
         let mesh = scan.mesh
+        let regionScores = RegionScorer.scores(for: scan)
+        let shapeReport = mesh.flatMap { FaceShapeAnalyzer.report(for: $0) }
 
         ScrollView {
             VStack(spacing: 20) {
@@ -22,12 +24,14 @@ struct ScanResultView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 FaceScoreCard(breakdown: scan.breakdown, previous: previousScan?.breakdown, date: scan.date)
+                RegionScoresCard(scores: regionScores)
+                ImprovementPlanCard(scores: regionScores)
+                FaceShapeCard(report: shapeReport)
                 meshCard(mesh)
                 expressionsCard(expressions)
                 controlCard(controls)
                 tensionCard(tension)
                 measurementsCard
-                recommendationsCard
                 Text("FaceFit scores are for tracking your own progress over time and are not a medical assessment.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -177,36 +181,4 @@ struct ScanResultView: View {
         }
     }
 
-    // MARK: - Recommendations
-
-    private var recommendations: [Exercise] {
-        var seen = Set<String>()
-        let findings = scan.focusAreas.prefix(3)
-        let candidates = findings.isEmpty ? ["smile", "brows"] : Array(findings)
-        return candidates
-            .flatMap { ExerciseLibrary.recommended(forFinding: $0) }
-            .filter { seen.insert($0.id).inserted }
-            .prefix(4)
-            .map { $0 }
-    }
-
-    private var recommendationsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Recommended for you", subtitle: "Based on your weakest areas")
-            ForEach(recommendations) { exercise in
-                NavigationLink {
-                    ExerciseDetailView(exercise: exercise)
-                } label: {
-                    HStack {
-                        ExerciseRow(exercise: exercise)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .card()
-    }
 }

@@ -26,6 +26,9 @@ struct AnalyzeView: View {
                         }
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Face Score with level and progress since last scan", systemImage: "gauge.with.dots.needle.67percent")
+                            Label("Scores for jawline, cheeks, lips, eyes and forehead", systemImage: "list.bullet.rectangle")
+                            Label("A personal exercise plan for your weakest areas", systemImage: "target")
+                            Label("Face shape and 3D proportions", systemImage: "oval.portrait")
                             Label("Structural symmetry from the 3D face mesh", systemImage: "cube.transparent")
                             Label("Left/right balance and range of 7 expressions", systemImage: "circle.lefthalf.filled")
                             Label("Muscle control with a wink test", systemImage: "scope")

@@ -28,6 +28,17 @@ Everything runs on the device. No images or face data leave the phone.
 - A radar chart that overlays your previous scan, the change in each pillar, and a "focus next" hint
 - A shareable score card image that contains scores only, never face data
 
+**Face Analysis & Improvement Plan**
+- Scores for each area (0–100), each with an insight into what's holding it back:
+  - **Jawline:** jaw range and a relaxed jaw position
+  - **Cheeks:** smile lift, balance and cheek strength
+  - **Lips & Mouth:** pucker strength, relaxed lips and mouth corners
+  - **Eye Area:** eyelid strength, wink control and squinting
+  - **Forehead & Brows:** brow lift, balance and frown tension
+  - **Symmetry:** balance of movement and of the 3D structure
+- **Your improvement plan:** picks your 3 weakest areas (goals you choose get extra priority), assigns 2 targeted exercises each plus a relaxation cool-down, and runs with one tap. The Today tab shows it as "Your plan for today". It works from goals alone before your first scan.
+- **Face shape & proportions:** an estimated face shape (oval, round, square, heart, diamond or oblong), how your face length, jaw width and forehead width compare with ARKit's average face model, and 3D measurements in mm: cheekbone, jaw, forehead and mouth width, eye width, the gap between your eyes and nose projection. The outline of the face, eyes and mouth comes straight from the openings in the TrueDepth mesh.
+
 **Face Challenge:** a 60-second game where you copy as many expressions as you can (grin, wink, tongue out, head turns and more), with speed and streak bonuses and a saved high score.
 
 **Eye Comfort Test:** read for one minute while TrueDepth counts full and incomplete blinks and measures your longest stare. You get an eye comfort score and screen-habit tips.
