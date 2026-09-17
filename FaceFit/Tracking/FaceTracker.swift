@@ -28,10 +28,18 @@ final class FaceTracker: NSObject, ARSessionDelegate {
     @ObservationIgnored private var cachedIndices: [Int16] = []
     @ObservationIgnored private var simulationTimer: Timer?
     @ObservationIgnored private var simulationStart: TimeInterval = 0
+    @ObservationIgnored private var textureRequest: ((FaceTexture, Data) -> Void)?
 
     override init() {
         super.init()
         session.delegate = self
+    }
+
+    /// Captures a color 3D face from the next frame where the face is frontal with eyes open.
+    /// Does nothing in demo mode.
+    func captureTexture(_ completion: @escaping (FaceTexture, Data) -> Void) {
+        guard Self.isTrueDepthAvailable else { return }
+        textureRequest = completion
     }
 
     func start() {
@@ -52,6 +60,7 @@ final class FaceTracker: NSObject, ARSessionDelegate {
     func stop() {
         guard isRunning else { return }
         isRunning = false
+        textureRequest = nil
         simulationTimer?.invalidate()
         simulationTimer = nil
         if !isSimulated {
@@ -88,13 +97,22 @@ final class FaceTracker: NSObject, ARSessionDelegate {
             }
         }
 
+        let head = HeadPose.from(face: face.transform, camera: frame.camera.transform)
+        if let request = textureRequest,
+           Swift.max(shapes[.eyeBlinkLeft] ?? 0, shapes[.eyeBlinkRight] ?? 0) < 0.3,
+           abs(head.yaw) < 12, abs(head.pitch) < 12,
+           let capture = FaceTextureCapture.make(frame: frame, anchor: face) {
+            textureRequest = nil
+            request(capture.texture, capture.jpeg)
+        }
+
         let left = face.leftEyeTransform.columns.3
         let right = face.rightEyeTransform.columns.3
         publish(FaceSample(
             timestamp: frame.timestamp,
             isTracked: true,
             blendShapes: shapes,
-            head: HeadPose.from(face: face.transform, camera: frame.camera.transform),
+            head: head,
             leftEye: SIMD3<Float>(left.x, left.y, left.z),
             rightEye: SIMD3<Float>(right.x, right.y, right.z),
             vertices: vertices,

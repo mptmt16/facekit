@@ -37,7 +37,18 @@ Everything runs on the device. No images or face data leave the phone.
   - **Forehead & Brows:** brow lift, balance and frown tension
   - **Symmetry:** balance of movement and of the 3D structure
 - **Your improvement plan:** picks your 3 weakest areas (goals you choose get extra priority), assigns 2 targeted exercises each plus a relaxation cool-down, and runs with one tap. The Today tab shows it as "Your plan for today". It works from goals alone before your first scan.
-- **Face shape & proportions:** an estimated face shape (oval, round, square, heart, diamond or oblong), how your face length, jaw width and forehead width compare with ARKit's average face model, and 3D measurements in mm: cheekbone, jaw, forehead and mouth width, eye width, the gap between your eyes and nose projection. The outline of the face, eyes and mouth comes straight from the openings in the TrueDepth mesh.
+- **Scientific face type:** the Martin–Saller **facial index**, face height (nasion–menton) ÷ bizygomatic width × 100, which is the classification used in physical anthropology:
+
+  | Facial index | Class | Meaning |
+  |---|---|---|
+  | below 80 | Hypereuryprosopic | very broad, short face |
+  | 80–84.9 | Euryprosopic | broad face |
+  | 85–89.9 | Mesoprosopic | medium face |
+  | 90–94.9 | Leptoprosopic | long, narrow face |
+  | 95 and above | Hyperleptoprosopic | very long, narrow face |
+
+  It also gives the **upper facial index** (nasion–stomion, from euryene to leptene). Landmarks are found automatically on the 3D mesh: nasion is the deepest point of the midline profile between the brows, menton is the lowest point of the chin, stomion is the centre of the mouth opening, and bizygomatic width is the widest point between nose-tip and eye level. Other 3D measurements, in mm, are jaw, forehead and mouth width, eye width, the gap between your eyes, and nose projection. Labels like oval, heart or square are fashion terms with no scientific definition, so the app doesn't use them.
+- **Color 3D face:** during the relaxed step of the scan, one camera frame is projected onto the mesh (like Apple's video-textured face sample), and the eye and mouth openings are capped. You get a real-color 3D model to rotate and zoom, with a switch to the symmetry heat map. It is stored only on the device, and you can turn it off in Settings.
 
 **Face Challenge:** a 60-second game where you copy as many expressions as you can (grin, wink, tongue out, head turns and more), with speed and streak bonuses and a saved high score.
 

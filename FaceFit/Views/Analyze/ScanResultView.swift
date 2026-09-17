@@ -5,6 +5,7 @@ struct ScanResultView: View {
     let scan: FaceScan
 
     @Query(sort: \FaceScan.date, order: .reverse) private var allScans: [FaceScan]
+    @State private var meshMode: MeshMode = .color
 
     private var previousScan: FaceScan? {
         allScans.first { $0.date < scan.date }
@@ -73,23 +74,56 @@ struct ScanResultView: View {
 
     // MARK: - Mesh
 
+    enum MeshMode: String, CaseIterable, Identifiable {
+        case color = "Color 3D"
+        case symmetry = "Symmetry map"
+
+        var id: String { rawValue }
+    }
+
     @ViewBuilder
     private func meshCard(_ mesh: MeshSnapshot?) -> some View {
+        let texture = scan.texture
+        let photo = scan.textureImageData.flatMap { UIImage(data: $0) }
+
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "3D symmetry map", subtitle: "Each area compared with its mirror image")
-            if let mesh {
-                MeshHeatmapView(mesh: mesh)
-                    .frame(height: 320)
-                HeatmapLegend()
-                if let asymmetry = scan.meshAsymmetryMM {
-                    Text("Average difference: \(asymmetry, specifier: "%.1f") mm · drag to rotate")
+            SectionHeader(title: "3D face", subtitle: "Drag to rotate · pinch to zoom the color model")
+            Picker("3D view", selection: $meshMode) {
+                ForEach(MeshMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            switch meshMode {
+            case .color:
+                if let texture, let photo {
+                    TexturedFaceView(texture: texture, image: photo)
+                        .frame(height: 340)
+                    Text("Your real colors from the RGB camera, wrapped on the TrueDepth mesh. Stored only on this iPhone.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else {
+                    Label("No color model for this scan. Keep \"Save color 3D face\" on in Settings and scan again.",
+                          systemImage: "camera")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-            } else {
-                Label("The 3D map needs a TrueDepth camera. It isn't available in demo mode.", systemImage: "cube.transparent")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            case .symmetry:
+                if let mesh {
+                    MeshHeatmapView(mesh: mesh)
+                        .frame(height: 320)
+                    HeatmapLegend()
+                    if let asymmetry = scan.meshAsymmetryMM {
+                        Text("Each area compared with its mirror image. Average difference: \(asymmetry, specifier: "%.1f") mm.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Label("The 3D map needs a TrueDepth camera. It isn't available in demo mode.", systemImage: "cube.transparent")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .card()

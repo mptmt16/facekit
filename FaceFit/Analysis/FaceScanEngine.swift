@@ -48,8 +48,17 @@ final class FaceScanEngine {
     @ObservationIgnored private var winkOpen = 0.0
     @ObservationIgnored private var controls: [ControlResult] = []
 
+    // Color 3D face
+    @ObservationIgnored private var texture: FaceTexture?
+    @ObservationIgnored private var textureJPEG: Data?
+
     init(steps: [ScanStep] = ScanStep.standard) {
         self.steps = steps
+    }
+
+    func attachTexture(_ texture: FaceTexture, jpeg: Data) {
+        self.texture = texture
+        textureJPEG = jpeg
     }
 
     var currentStep: ScanStep { steps[min(stepIndex, steps.count - 1)] }
@@ -261,7 +270,9 @@ final class FaceScanEngine {
             faceHeightMM: faceHeightMM,
             expressions: expressions,
             tension: tension.sorted { $0.excess > $1.excess },
-            mesh: mesh
+            mesh: mesh,
+            texture: texture,
+            textureJPEG: textureJPEG
         )
     }
 }

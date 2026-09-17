@@ -26,4 +26,5 @@ enum SettingsKey {
     static let challengeGames = "challengeGames"
     /// Comma-separated FaceRegion raw values.
     static let improvementGoals = "improvementGoals"
+    static let saveFacePhoto = "saveFacePhoto"
 }

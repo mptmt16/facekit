@@ -47,6 +47,9 @@ final class FaceScan {
     @Attribute(.externalStorage) var tensionData: Data?
     @Attribute(.externalStorage) var controlData: Data?
     @Attribute(.externalStorage) var meshData: Data?
+    /// JPEG photo and JSON mesh for the color 3D face.
+    @Attribute(.externalStorage) var textureImageData: Data?
+    @Attribute(.externalStorage) var textureMeshData: Data?
 
     init(outcome: ScanOutcome, date: Date = .now) {
         self.date = date
@@ -64,6 +67,13 @@ final class FaceScan {
         tensionData = try? encoder.encode(outcome.tension)
         controlData = try? encoder.encode(outcome.controls)
         meshData = outcome.mesh.flatMap { try? encoder.encode($0) }
+        textureImageData = outcome.textureJPEG
+        textureMeshData = outcome.texture.flatMap { try? encoder.encode($0) }
+    }
+
+    var texture: FaceTexture? {
+        guard let textureMeshData else { return nil }
+        return try? JSONDecoder().decode(FaceTexture.self, from: textureMeshData)
     }
 
     var breakdown: FaceScoreBreakdown {

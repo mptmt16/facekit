@@ -7,6 +7,7 @@ struct FaceScanView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage(SettingsKey.voiceCoach) private var voiceCoach = true
     @AppStorage(SettingsKey.haptics) private var haptics = true
+    @AppStorage(SettingsKey.saveFacePhoto) private var saveFacePhoto = true
 
     @State private var tracker = FaceTracker()
     @State private var engine = FaceScanEngine()
@@ -153,6 +154,13 @@ struct FaceScanView: View {
             coach.tap()
             coach.say(step.voice)
         }
+        engine.onRecordingStarted = { [engine, tracker] step in
+            // Grab the color 3D face while the face is relaxed and looking straight ahead.
+            guard saveFacePhoto, case .neutral = step.kind else { return }
+            tracker.captureTexture { texture, jpeg in
+                engine.attachTexture(texture, jpeg: jpeg)
+            }
+        }
         engine.onFinished = { outcome in
             coach.success()
             coach.say("Scan complete.")
@@ -173,6 +181,7 @@ struct FaceScanView: View {
         UIApplication.shared.isIdleTimerDisabled = false
         tracker.onSample = nil
         engine.onStepStarted = nil
+        engine.onRecordingStarted = nil
         engine.onFinished = nil
         tracker.stop()
         coach?.finish()

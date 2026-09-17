@@ -70,6 +70,9 @@ struct ScanOutcome {
     var expressions: [ExpressionResult]
     var tension: [TensionItem]
     var mesh: MeshSnapshot?
+    /// Color 3D face captured during the relaxed step, if enabled.
+    var texture: FaceTexture?
+    var textureJPEG: Data?
 }
 
 /// One guided step of the face scan.

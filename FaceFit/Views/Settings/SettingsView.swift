@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.reminderMinutes) private var reminderMinutes = 19 * 60
     @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
     @AppStorage(SettingsKey.challengeGames) private var challengeGames = 0
+    @AppStorage(SettingsKey.saveFacePhoto) private var saveFacePhoto = true
 
     @State private var confirmingDelete = false
     @State private var notificationsDenied = false
@@ -58,6 +59,14 @@ struct SettingsView: View {
 
                 Section("Display") {
                     Toggle("Show 3D face mesh", isOn: $showMesh)
+                }
+
+                Section {
+                    Toggle("Save color 3D face", isOn: $saveFacePhoto)
+                } header: {
+                    Text("Face scans")
+                } footer: {
+                    Text("Keeps one camera frame from each scan so you can rotate a color 3D model of your face. It stays on this iPhone; deleting a scan removes it.")
                 }
 
                 Section("Camera") {
