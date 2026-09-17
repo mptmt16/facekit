@@ -176,7 +176,7 @@ extension Array where Element == ExerciseSession {
             } else {
                 current = 1
             }
-            best = max(best, current)
+            best = Swift.max(best, current)
             previous = day
         }
         return best
