@@ -228,6 +228,7 @@ enum ExerciseLibrary {
         case "smile", "frown": ["side-smile", "smile-lift"]
         case "brows": ["brow-raise", "wide-eyes"]
         case "eyes", "squint": ["eye-squeeze", "wink-control"]
+        case "wink-left", "wink-right": ["wink-control", "side-smile"]
         case "nose": ["nose-scrunch"]
         case "cheeks": ["cheek-puff", "fish-face"]
         case "pucker", "lip-press": ["kiss-smile", "fish-face"]

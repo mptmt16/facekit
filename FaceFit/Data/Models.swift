@@ -37,12 +37,15 @@ final class FaceScan {
     var symmetryScore: Double = 0
     var rangeScore: Double = 0
     var relaxationScore: Double = 0
+    /// Nil for scans taken before the wink control test was added.
+    var controlScore: Double?
     var meshAsymmetryMM: Double?
     var eyeDistanceMM: Double?
     var faceWidthMM: Double?
     var faceHeightMM: Double?
     @Attribute(.externalStorage) var expressionsData: Data?
     @Attribute(.externalStorage) var tensionData: Data?
+    @Attribute(.externalStorage) var controlData: Data?
     @Attribute(.externalStorage) var meshData: Data?
 
     init(outcome: ScanOutcome, date: Date = .now) {
@@ -51,6 +54,7 @@ final class FaceScan {
         symmetryScore = outcome.symmetryScore
         rangeScore = outcome.rangeScore
         relaxationScore = outcome.relaxationScore
+        controlScore = outcome.controlScore
         meshAsymmetryMM = outcome.meshAsymmetryMM
         eyeDistanceMM = outcome.eyeDistanceMM
         faceWidthMM = outcome.faceWidthMM
@@ -58,7 +62,20 @@ final class FaceScan {
         let encoder = JSONEncoder()
         expressionsData = try? encoder.encode(outcome.expressions)
         tensionData = try? encoder.encode(outcome.tension)
+        controlData = try? encoder.encode(outcome.controls)
         meshData = outcome.mesh.flatMap { try? encoder.encode($0) }
+    }
+
+    var breakdown: FaceScoreBreakdown {
+        FaceScoreBreakdown(symmetry: symmetryScore, mobility: rangeScore,
+                           control: controlScore, relaxation: relaxationScore)
+    }
+
+    var level: FaceLevel { FaceLevel(score: overallScore) }
+
+    var controls: [ControlResult] {
+        guard let controlData else { return [] }
+        return (try? JSONDecoder().decode([ControlResult].self, from: controlData)) ?? []
     }
 
     var expressions: [ExpressionResult] {
@@ -84,9 +101,48 @@ final class FaceScan {
         let tenseMuscles = tension
             .filter { $0.excess > 0.03 }
             .map { ($0.id, $0.excess * 4) }
-        return (weakExpressions + tenseMuscles)
+        let weakControl = controls
+            .map { ($0.id, (1 - $0.score) * 1.5) }
+            .filter { $0.1 > 0.3 }
+        return (weakExpressions + tenseMuscles + weakControl)
             .sorted { $0.1 > $1.1 }
             .map { $0.0 }
+    }
+}
+
+@Model
+final class BlinkTest {
+    var date: Date = Date()
+    var duration: Double = 0
+    var blinkCount: Int = 0
+    var partialBlinkCount: Int = 0
+    var longestGap: Double = 0
+    var openness: Double = 0
+    var squint: Double = 0
+    var score: Double = 0
+
+    init(result: BlinkTestResult, date: Date = .now) {
+        self.date = date
+        duration = result.duration
+        blinkCount = result.blinkCount
+        partialBlinkCount = result.partialBlinkCount
+        longestGap = result.longestGap
+        openness = result.openness
+        squint = result.squint
+        score = result.score
+    }
+
+    var blinksPerMinute: Double {
+        duration > 0 ? Double(blinkCount) / (duration / 60) : 0
+    }
+
+    var partialRatio: Double {
+        let total = blinkCount + partialBlinkCount
+        return total > 0 ? Double(partialBlinkCount) / Double(total) : 0
+    }
+
+    var advice: [String] {
+        BlinkScoring.advice(rate: blinksPerMinute, partialRatio: partialRatio, longestGap: longestGap, squint: squint)
     }
 }
 
@@ -105,5 +161,28 @@ extension Array where Element == ExerciseSession {
             day = previous
         }
         return count
+    }
+
+    /// Longest run of consecutive training days ever.
+    var bestStreak: Int {
+        let calendar = Calendar.current
+        let days = Set(map { calendar.startOfDay(for: $0.date) }).sorted()
+        var best = 0
+        var current = 0
+        var previous: Date?
+        for day in days {
+            if let previous, let expected = calendar.date(byAdding: .day, value: 1, to: previous), expected == day {
+                current += 1
+            } else {
+                current = 1
+            }
+            best = max(best, current)
+            previous = day
+        }
+        return best
+    }
+
+    var totalReps: Int {
+        reduce(0) { $0 + $1.repsCompleted }
     }
 }

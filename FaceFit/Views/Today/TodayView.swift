@@ -7,10 +7,14 @@ struct TodayView: View {
 
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     @Query(sort: \FaceScan.date, order: .reverse) private var scans: [FaceScan]
+    @Query(sort: \BlinkTest.date, order: .reverse) private var blinkTests: [BlinkTest]
+    @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
 
     @State private var routineRunning = false
     @State private var scanning = false
     @State private var showingSettings = false
+    @State private var playingChallenge = false
+    @State private var testingEyes = false
 
     var body: some View {
         NavigationStack {
@@ -19,8 +23,9 @@ struct TodayView: View {
                     header
                     routineCard
                     statsRow
-                    weekChart
                     scanCard
+                    playRow
+                    weekChart
                     if !FaceTracker.isTrueDepthAvailable {
                         Label("This device has no TrueDepth camera, so FaceFit runs in demo mode with simulated data.",
                               systemImage: "info.circle")
@@ -46,6 +51,46 @@ struct TodayView: View {
                 ExerciseSessionView(exercises: ExerciseLibrary.dailyRoutine)
             }
             .fullScreenCover(isPresented: $scanning) { FaceScanView() }
+            .fullScreenCover(isPresented: $playingChallenge) { FaceChallengeView() }
+            .fullScreenCover(isPresented: $testingEyes) { BlinkTestView() }
+        }
+    }
+
+    private var playRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                playingChallenge = true
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("🎭").font(.title)
+                    Text("Face Challenge").font(.headline)
+                    Text(challengeHighScore > 0 ? "Best: \(challengeHighScore)" : "60-second expression game")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                testingEyes = true
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    Image(systemName: "eye")
+                        .font(.title)
+                        .foregroundStyle(Theme.accent)
+                    Text("Eye Comfort").font(.headline)
+                    Text(blinkTests.first.map { "Last score: \(Int($0.score.rounded()))" } ?? "1-minute blink test")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -152,21 +197,48 @@ struct TodayView: View {
     @ViewBuilder
     private var scanCard: some View {
         if let latest = scans.first {
+            let breakdown = latest.breakdown
+            let level = latest.level
             VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "Latest face scan",
-                              subtitle: latest.date.formatted(.relative(presentation: .named)))
+                SectionHeader(title: "Your Face Score",
+                              subtitle: "Scanned " + latest.date.formatted(.relative(presentation: .named)))
                 NavigationLink {
                     ScanResultView(scan: latest)
                 } label: {
-                    HStack {
-                        ScoreGauge(score: latest.overallScore, title: "Overall", size: 64)
+                    HStack(spacing: 16) {
+                        ScoreGauge(score: breakdown.overall, title: "", size: 76, lineWidth: 9)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Label(level.title, systemImage: level.symbol)
+                                .font(.headline)
+                                .foregroundStyle(level.color)
+                            if scans.count > 1 {
+                                DeltaBadge(delta: breakdown.overall - scans[1].overallScore)
+                            }
+                            if let weakest = breakdown.weakest {
+                                Text("Focus next: \(weakest.title)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                         Spacer()
-                        ScoreGauge(score: latest.symmetryScore, title: "Symmetry", size: 48, lineWidth: 6)
-                        ScoreGauge(score: latest.rangeScore, title: "Range", size: 48, lineWidth: 6)
-                        ScoreGauge(score: latest.relaxationScore, title: "Relaxed", size: 48, lineWidth: 6)
+                        Image(systemName: "chevron.right").foregroundStyle(.secondary)
                     }
                 }
                 .buttonStyle(.plain)
+
+                HStack(spacing: 8) {
+                    ForEach(FacePillar.allCases) { pillar in
+                        VStack(spacing: 4) {
+                            Text(breakdown.value(for: pillar).map { "\(Int($0.rounded()))" } ?? "–")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(pillar.color)
+                            Text(pillar.title)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
 
                 if let focus = latest.focusAreas.first,
                    let exercise = ExerciseLibrary.recommended(forFinding: focus).first {
@@ -192,7 +264,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Label("Get your face baseline", systemImage: "faceid")
                     .font(.title3.bold())
-                Text("A 40-second 3D scan measures your symmetry, expression range and resting tension so you can track real progress.")
+                Text("A \(Int(ScanStep.totalDuration))-second 3D scan gives you a Face Score for symmetry, mobility, control and relaxation, so you can track real progress.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button("Take first scan") { scanning = true }

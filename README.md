@@ -22,6 +22,22 @@ Everything runs on the device. No images or face data leave the phone.
 - **Measurements:** eye distance, face mesh width and height
 - An overall Face Score and recommended exercises for your weakest areas
 
+**Face Score**
+- Weighted 0–100 score from four pillars: **Symmetry** (30%), **Mobility** (25%), **Control** (20%, from a left and right wink test) and **Relaxation** (25%)
+- Levels (Getting started → Developing → Fit → Strong → Elite) with points needed to reach the next level
+- A radar chart that overlays your previous scan, the change in each pillar, and a "focus next" hint
+- A shareable score card image that contains scores only, never face data
+
+**Face Challenge:** a 60-second game where you copy as many expressions as you can (grin, wink, tongue out, head turns and more), with speed and streak bonuses and a saved high score.
+
+**Eye Comfort Test:** read for one minute while TrueDepth counts full and incomplete blinks and measures your longest stare. You get an eye comfort score and screen-habit tips.
+
+**Programs:** themed routines (Jawline & Neck, Smile Symmetry, Bright Eyes, Stress Release, Full Face Burn), plus the daily workout.
+
+**Daily reminder:** an optional notification at a time you choose.
+
+**Achievements:** 14 badges for streaks, reps, scores, the challenge and eye tests.
+
 **Progress:** day streaks, weekly and 30-day activity charts, score trends across scans, a breakdown by muscle group and session history (SwiftData).
 
 **Face Lab:** a live readout of all 52 blend shapes, head angles, eye distance and left/right balance.

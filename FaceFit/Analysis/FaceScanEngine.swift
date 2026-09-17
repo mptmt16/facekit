@@ -41,6 +41,13 @@ final class FaceScanEngine {
     @ObservationIgnored private var peaks: [BlendShape: Double] = [:]
     @ObservationIgnored private var expressions: [ExpressionResult] = []
 
+    // Wink (control) step accumulators
+    @ObservationIgnored private var winkSmoothed: Double?
+    @ObservationIgnored private var winkIsolation = 0.0
+    @ObservationIgnored private var winkClosed = 0.0
+    @ObservationIgnored private var winkOpen = 0.0
+    @ObservationIgnored private var controls: [ControlResult] = []
+
     init(steps: [ScanStep] = ScanStep.standard) {
         self.steps = steps
     }
@@ -56,6 +63,7 @@ final class FaceScanEngine {
         state = .running
         stepIndex = 0
         expressions = []
+        controls = []
         startStep()
     }
 
@@ -94,6 +102,10 @@ final class FaceScanEngine {
         isLeadIn = true
         smoothed = [:]
         peaks = [:]
+        winkSmoothed = nil
+        winkIsolation = 0
+        winkClosed = 0
+        winkOpen = 0
         onStepStarted?(currentStep)
     }
 
@@ -101,6 +113,11 @@ final class FaceScanEngine {
         let step = currentStep
         if case let .expression(left, right, others, reference) = step.kind {
             expressions.append(makeExpressionResult(step: step, left: left, right: right, others: others, reference: reference))
+        }
+        if case .wink = step.kind {
+            // A clean wink (closed ≈ 0.9, other eye ≈ 0.2) scores full marks.
+            controls.append(ControlResult(id: step.id, name: step.title, closed: winkClosed, open: winkOpen,
+                                          score: min(1, max(0, winkIsolation / 0.6))))
         }
         if stepIndex + 1 < steps.count {
             stepIndex += 1
@@ -123,6 +140,17 @@ final class FaceScanEngine {
                 let value = 0.6 * (smoothed[shape] ?? sample.value(shape)) + 0.4 * sample.value(shape)
                 smoothed[shape] = value
                 peaks[shape] = max(peaks[shape] ?? 0, value)
+            }
+        case let .wink(closing, open):
+            let closedValue = sample.value(closing)
+            let openValue = sample.value(open)
+            let isolation = closedValue - openValue
+            let smoothedIsolation = 0.6 * (winkSmoothed ?? isolation) + 0.4 * isolation
+            winkSmoothed = smoothedIsolation
+            if smoothedIsolation > winkIsolation {
+                winkIsolation = smoothedIsolation
+                winkClosed = closedValue
+                winkOpen = openValue
             }
         }
     }
@@ -211,14 +239,22 @@ final class FaceScanEngine {
         case (nil, nil): 0
         }
 
-        let overall = (symmetryScore + rangeScore + relaxationScore) / 3
+        // Control: how cleanly each side works on its own
+        let controlScore: Double? = controls.isEmpty
+            ? nil
+            : 100 * controls.map(\.score).reduce(0, +) / Double(controls.count)
+
+        let breakdown = FaceScoreBreakdown(symmetry: symmetryScore, mobility: rangeScore,
+                                           control: controlScore, relaxation: relaxationScore)
         let eyeDistance: Double? = neutralFrames > 0 ? eyeDistanceSum / frames : nil
 
         return ScanOutcome(
-            overallScore: overall,
+            overallScore: breakdown.overall,
             symmetryScore: symmetryScore,
             rangeScore: rangeScore,
             relaxationScore: relaxationScore,
+            controlScore: controlScore,
+            controls: controls,
             meshAsymmetryMM: meshAsymmetryMM,
             eyeDistanceMM: eyeDistance,
             faceWidthMM: faceWidthMM,

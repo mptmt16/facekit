@@ -32,6 +32,18 @@ struct TensionItem: Codable, Identifiable, Hashable {
     var excess: Double { max(0, level - allowance) }
 }
 
+/// How cleanly one eye closed while the other stayed open (the Control pillar).
+struct ControlResult: Codable, Identifiable, Hashable {
+    var id: String
+    var name: String
+    /// Closure of the eye that should close, at the cleanest moment, 0...1.
+    var closed: Double
+    /// Closure of the eye that should stay open, at that same moment, 0...1.
+    var open: Double
+    /// 0...1
+    var score: Double
+}
+
 /// The averaged neutral mesh plus per-vertex asymmetry, for the 3D heat map.
 struct MeshSnapshot: Codable {
     /// Flattened x, y, z in metres (face-anchor space).
@@ -49,6 +61,8 @@ struct ScanOutcome {
     var symmetryScore: Double
     var rangeScore: Double
     var relaxationScore: Double
+    var controlScore: Double?
+    var controls: [ControlResult]
     var meshAsymmetryMM: Double?
     var eyeDistanceMM: Double?
     var faceWidthMM: Double?
@@ -63,6 +77,8 @@ struct ScanStep: Identifiable {
     enum Kind {
         case neutral
         case expression(left: BlendShape?, right: BlendShape?, others: [BlendShape], reference: Double)
+        /// Close `closing` while keeping `open` open.
+        case wink(closing: BlendShape, open: BlendShape)
     }
 
     let id: String
@@ -88,6 +104,16 @@ struct ScanStep: Identifiable {
                  voice: "Raise your eyebrows as high as you can.",
                  symbol: "eyebrow", duration: 3,
                  kind: .expression(left: .browOuterUpLeft, right: .browOuterUpRight, others: [.browInnerUp], reference: 0.7)),
+        ScanStep(id: "wink-left", title: "Wink left eye",
+                 instruction: "Close only your left eye and keep the right one open.",
+                 voice: "Wink your left eye, and keep the right one open.",
+                 symbol: "eyes", duration: 3,
+                 kind: .wink(closing: .eyeBlinkLeft, open: .eyeBlinkRight)),
+        ScanStep(id: "wink-right", title: "Wink right eye",
+                 instruction: "Close only your right eye and keep the left one open.",
+                 voice: "Now wink your right eye.",
+                 symbol: "eyes", duration: 3,
+                 kind: .wink(closing: .eyeBlinkRight, open: .eyeBlinkLeft)),
         ScanStep(id: "eyes", title: "Close eyes tightly",
                  instruction: "Squeeze your eyes shut until you hear the next cue.",
                  voice: "Squeeze your eyes shut, tightly.",

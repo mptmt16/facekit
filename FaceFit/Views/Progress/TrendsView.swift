@@ -5,6 +5,8 @@ import Charts
 struct TrendsView: View {
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     @Query(sort: \FaceScan.date) private var scans: [FaceScan]
+    @Query private var blinkTests: [BlinkTest]
+    @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
 
     private struct ScorePoint: Identifiable {
         let id = UUID()
@@ -24,6 +26,7 @@ struct TrendsView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     totalsRow
+                    achievementsLink
                     scoreChart
                     repsChart
                     categoryBreakdown
@@ -38,13 +41,17 @@ struct TrendsView: View {
     // MARK: - Data
 
     private var scorePoints: [ScorePoint] {
-        scans.flatMap { scan in
-            [
+        scans.flatMap { scan -> [ScorePoint] in
+            var points = [
                 ScorePoint(date: scan.date, metric: "Overall", value: scan.overallScore),
                 ScorePoint(date: scan.date, metric: "Symmetry", value: scan.symmetryScore),
-                ScorePoint(date: scan.date, metric: "Range", value: scan.rangeScore),
+                ScorePoint(date: scan.date, metric: "Mobility", value: scan.rangeScore),
                 ScorePoint(date: scan.date, metric: "Relaxation", value: scan.relaxationScore),
             ]
+            if let control = scan.controlScore {
+                points.append(ScorePoint(date: scan.date, metric: "Control", value: control))
+            }
+            return points
         }
     }
 
@@ -66,28 +73,37 @@ struct TrendsView: View {
     private var totalsRow: some View {
         HStack(spacing: 12) {
             StatTile(title: "Sessions", value: "\(sessions.count)", symbol: "checkmark.circle")
-            StatTile(title: "Total reps", value: "\(sessions.reduce(0) { $0 + $1.repsCompleted })",
+            StatTile(title: "Total reps", value: "\(sessions.totalReps)",
                      symbol: "repeat", color: Theme.secondary)
-            StatTile(title: "Best streak", value: "\(bestStreak)", symbol: "flame.fill", color: Theme.warm)
+            StatTile(title: "Best streak", value: "\(sessions.bestStreak)", symbol: "flame.fill", color: Theme.warm)
         }
     }
 
-    private var bestStreak: Int {
-        let calendar = Calendar.current
-        let days = Set(sessions.map { calendar.startOfDay(for: $0.date) }).sorted()
-        var best = 0
-        var current = 0
-        var previous: Date?
-        for day in days {
-            if let previous, let expected = calendar.date(byAdding: .day, value: 1, to: previous), expected == day {
-                current += 1
-            } else {
-                current = 1
+    private var achievementsLink: some View {
+        let achievements = AchievementCatalog.evaluate(sessions: sessions, scans: scans, blinkTests: blinkTests,
+                                                       challengeHighScore: challengeHighScore)
+        let unlocked = achievements.filter(\.isUnlocked).count
+        return NavigationLink {
+            AchievementsView()
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "trophy.fill")
+                    .font(.title2)
+                    .foregroundStyle(Theme.warm)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Achievements").font(.headline)
+                    Text("\(unlocked) of \(achievements.count) unlocked")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ProgressView(value: Double(unlocked), total: Double(max(achievements.count, 1)))
+                        .tint(Theme.warm)
+                }
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
             }
-            best = max(best, current)
-            previous = day
+            .card()
         }
-        return best
+        .buttonStyle(.plain)
     }
 
     private var scoreChart: some View {
@@ -110,9 +126,10 @@ struct TrendsView: View {
                 }
                 .chartForegroundStyleScale([
                     "Overall": Color.white,
-                    "Symmetry": Theme.accent,
-                    "Range": Theme.secondary,
-                    "Relaxation": Theme.warm,
+                    "Symmetry": FacePillar.symmetry.color,
+                    "Mobility": FacePillar.mobility.color,
+                    "Control": FacePillar.control.color,
+                    "Relaxation": FacePillar.relaxation.color,
                 ])
                 .chartYScale(domain: 0...100)
                 .chartLegend(position: .bottom)

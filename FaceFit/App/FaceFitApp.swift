@@ -9,7 +9,7 @@ struct FaceFitApp: App {
                 .preferredColorScheme(.dark)
                 .tint(Theme.accent)
         }
-        .modelContainer(for: [ExerciseSession.self, FaceScan.self])
+        .modelContainer(for: [ExerciseSession.self, FaceScan.self, BlinkTest.self])
     }
 }
 
@@ -19,4 +19,9 @@ enum SettingsKey {
     static let showMesh = "showMesh"
     static let difficulty = "difficulty"
     static let hasOnboarded = "hasOnboarded"
+    static let reminderEnabled = "reminderEnabled"
+    /// Reminder time as minutes after midnight.
+    static let reminderMinutes = "reminderMinutes"
+    static let challengeHighScore = "challengeHighScore"
+    static let challengeGames = "challengeGames"
 }

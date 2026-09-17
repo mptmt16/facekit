@@ -19,6 +19,8 @@ final class FaceTracker: NSObject, ARSessionDelegate {
 
     /// Copy mesh vertices into each sample (only needed by the face scan).
     @ObservationIgnored var includeGeometry = false
+    /// Demo mode only: simulate quick natural blinks instead of slow eye-closing waves.
+    @ObservationIgnored var simulateNaturalBlinks = false
     /// Receives every processed sample. Engines hook in here.
     @ObservationIgnored var onSample: ((FaceSample) -> Void)?
 
@@ -146,7 +148,18 @@ final class FaceTracker: NSObject, ARSessionDelegate {
 
         var shapes: [BlendShape: Double] = [:]
         for shape in BlendShapeCatalog.allShapes {
-            if tensionShapes.contains(shape) {
+            if simulateNaturalBlinks, shape == .eyeBlinkLeft || shape == .eyeBlinkRight {
+                // A full blink every 3.4 s, plus an incomplete blink every third cycle.
+                let cycle = t.truncatingRemainder(dividingBy: 3.4)
+                let isPartialCycle = Int(t / 3.4) % 3 == 0
+                if cycle < 0.2 {
+                    shapes[shape] = 0.9
+                } else if isPartialCycle, cycle > 1.6, cycle < 1.8 {
+                    shapes[shape] = 0.35
+                } else {
+                    shapes[shape] = 0.05
+                }
+            } else if tensionShapes.contains(shape) {
                 shapes[shape] = 0.06 + 0.03 * sin(t * 1.7)
             } else if shape.rawValue.hasSuffix("_R") {
                 shapes[shape] = wave * 0.9   // a little asymmetry makes the analysis interesting

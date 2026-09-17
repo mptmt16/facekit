@@ -29,6 +29,16 @@ struct ExerciseListView: View {
                     .foregroundStyle(.primary)
                 }
 
+                Section("Programs") {
+                    ForEach(ProgramLibrary.all) { program in
+                        NavigationLink {
+                            ProgramDetailView(program: program)
+                        } label: {
+                            ProgramRow(program: program)
+                        }
+                    }
+                }
+
                 ForEach(ExerciseCategory.allCases) { category in
                     Section {
                         ForEach(ExerciseLibrary.exercises(in: category)) { exercise in

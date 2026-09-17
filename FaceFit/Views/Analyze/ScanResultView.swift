@@ -1,18 +1,30 @@
 import SwiftUI
+import SwiftData
 
 struct ScanResultView: View {
     let scan: FaceScan
 
+    @Query(sort: \FaceScan.date, order: .reverse) private var allScans: [FaceScan]
+
+    private var previousScan: FaceScan? {
+        allScans.first { $0.date < scan.date }
+    }
+
     var body: some View {
         let expressions = scan.expressions
         let tension = scan.tension
+        let controls = scan.controls
         let mesh = scan.mesh
 
         ScrollView {
             VStack(spacing: 20) {
-                overviewCard
+                Text(scan.date, format: .dateTime.weekday(.wide).day().month().hour().minute())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                FaceScoreCard(breakdown: scan.breakdown, previous: previousScan?.breakdown, date: scan.date)
                 meshCard(mesh)
                 expressionsCard(expressions)
+                controlCard(controls)
                 tensionCard(tension)
                 measurementsCard
                 recommendationsCard
@@ -27,36 +39,32 @@ struct ScanResultView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - Overview
+    // MARK: - Control
 
-    private var overviewCard: some View {
-        VStack(spacing: 18) {
-            Text(scan.date, format: .dateTime.weekday(.wide).day().month().hour().minute())
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            ScoreGauge(score: scan.overallScore, title: "Face score", size: 130, lineWidth: 14)
-            HStack(alignment: .top) {
-                ScoreGauge(score: scan.symmetryScore, title: "Symmetry")
-                    .frame(maxWidth: .infinity)
-                ScoreGauge(score: scan.rangeScore, title: "Expression\nrange")
-                    .frame(maxWidth: .infinity)
-                ScoreGauge(score: scan.relaxationScore, title: "Relaxation")
-                    .frame(maxWidth: .infinity)
+    @ViewBuilder
+    private func controlCard(_ controls: [ControlResult]) -> some View {
+        if !controls.isEmpty {
+            VStack(alignment: .leading, spacing: 14) {
+                SectionHeader(title: "Muscle control", subtitle: "Closing one eye while the other stays open")
+                ForEach(controls) { control in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(control.name).font(.subheadline.weight(.semibold))
+                            Spacer()
+                            Text("\(Int((control.score * 100).rounded()))%")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(Theme.color(forScore: control.score * 100))
+                        }
+                        Text("Closed \(Int(control.closed * 100))% · other eye \(Int(control.open * 100))% closed")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        ProgressView(value: control.score)
+                            .tint(FacePillar.control.color)
+                    }
+                }
             }
-            Text(summary)
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
+            .card()
         }
-        .card()
-    }
-
-    private var summary: String {
-        let parts = [("symmetry", scan.symmetryScore), ("expression range", scan.rangeScore), ("relaxation", scan.relaxationScore)]
-        guard let best = parts.max(by: { $0.1 < $1.1 }), let worst = parts.min(by: { $0.1 < $1.1 }) else { return "" }
-        if worst.1 >= 80 {
-            return "Excellent all round. Keep training to maintain your results."
-        }
-        return "Your strongest area is \(best.0). Focus on \(worst.0) next — the exercises below target it."
     }
 
     // MARK: - Mesh
