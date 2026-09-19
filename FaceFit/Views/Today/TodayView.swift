@@ -10,6 +10,11 @@ struct TodayView: View {
     @Query(sort: \BlinkTest.date, order: .reverse) private var blinkTests: [BlinkTest]
     @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
     @AppStorage(SettingsKey.improvementGoals) private var goalsRaw = ""
+    @AppStorage(ProfileKey.name) private var profileName = ""
+    @AppStorage(ProfileKey.age) private var profileAge = 0
+    @AppStorage(ProfileKey.water) private var profileWater = 0
+    @AppStorage(ProfileKey.sleep) private var profileSleep = 0.0
+    @AppStorage(ProfileKey.screen) private var profileScreen = 0.0
 
     @State private var planRunning = false
     @State private var editingGoals = false
@@ -29,6 +34,7 @@ struct TodayView: View {
                     statsRow
                     scanCard
                     playRow
+                    tipCard
                     weekChart
                     if !FaceTracker.isTrueDepthAvailable {
                         Label("This device has no TrueDepth camera, so FaceFit runs in demo mode with simulated data.",
@@ -123,6 +129,24 @@ struct TodayView: View {
         }
     }
 
+    private var tipCard: some View {
+        let profile = UserProfile(name: profileName, age: profileAge, waterGlasses: profileWater,
+                                  sleepHours: profileSleep, screenHours: profileScreen)
+        let tip = DailyTips.tip(for: .now, profile: profile, scan: scans.first, streak: sessions.streak)
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: tip.symbol)
+                .font(.title3)
+                .foregroundStyle(Theme.warm)
+                .frame(width: 36, height: 36)
+                .background(Theme.warm.opacity(0.15), in: Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Tip of the day").font(.caption.bold()).foregroundStyle(.secondary)
+                Text(tip.text).font(.subheadline)
+            }
+        }
+        .card()
+    }
+
     private var playRow: some View {
         HStack(spacing: 12) {
             Button {
@@ -161,6 +185,13 @@ struct TodayView: View {
         }
     }
 
+    private var greeting: String {
+        let base = todaysSessions.isEmpty ? "Ready for today's workout?" : "Nice — you trained today."
+        guard !profileName.isEmpty else { return base }
+        let firstName = profileName.split(separator: " ").first.map(String.init) ?? profileName
+        return todaysSessions.isEmpty ? "Ready, \(firstName)?" : "Nice work, \(firstName)."
+    }
+
     // MARK: - Data
 
     private var todaysSessions: [ExerciseSession] {
@@ -192,7 +223,7 @@ struct TodayView: View {
             Text(Date.now, format: .dateTime.weekday(.wide).day().month(.wide))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text(todaysSessions.isEmpty ? "Ready for today's workout?" : "Nice — you trained today.")
+            Text(greeting)
                 .font(.title2.bold())
         }
         .frame(maxWidth: .infinity, alignment: .leading)

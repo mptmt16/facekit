@@ -50,6 +50,22 @@ Everything runs on the device. No images or face data leave the phone.
   It also gives the **upper facial index** (nasion–stomion, from euryene to leptene). Landmarks are found automatically on the 3D mesh: nasion is the deepest point of the midline profile between the brows, menton is the lowest point of the chin, stomion is the centre of the mouth opening, and bizygomatic width is the widest point between nose-tip and eye level. Other 3D measurements, in mm, are jaw, forehead and mouth width, eye width, the gap between your eyes, and nose projection. Labels like oval, heart or square are fashion terms with no scientific definition, so the app doesn't use them.
 - **Color 3D face:** during the relaxed step of the scan, one camera frame is projected onto the mesh (like Apple's video-textured face sample), and the eye and mouth openings are capped. You get a real-color 3D model to rotate and zoom, with a switch to the symmetry heat map. It is stored only on the device, and you can turn it off in Settings.
 
+**Skin Analysis (on-device)**
+- Splits the TrueDepth mesh into six zones (forehead, nose, both cheeks, under-eye, chin) and maps them onto the scan photo, excluding eyes, brows and lips
+- Counts **blemishes** (reddish) and **dark spots** (not red) as local-contrast peaks, skipping very dark areas so hair and shadow don't count, and counts **fine lines** as elongated ridge components
+- Scores clarity, texture, tone evenness, calmness, shine, fine lines and under-eye brightness, plus a score per zone
+- Zoomed crops with each finding circled, a zone map and plain-language tips
+- Unlike cloud-based competitors, no photo ever leaves the device
+
+**Training experience**
+- **3D demo for every exercise**, built from ARKit's own face model driven by the same blend shapes the app measures, so there is no stock footage and the demo always matches the target
+- **Form %** and a live bar per muscle during a session: bolt for muscles that must work, leaf for muscles that must stay relaxed
+- Beginner / Intermediate / Advanced levels, search across names and muscles, and swipe-to-save favourites
+
+**Before & after:** two scans side by side with the photos, plus the change in Face Score, each pillar, skin score, spot counts and every area.
+
+**You tab:** name, age, water, sleep and screen time (stored on device), streak and totals, scan history, achievements, before & after, and settings. A **tip of the day** on the Today screen reacts to those habits and your latest scan.
+
 **Face Challenge:** a 60-second game where you copy as many expressions as you can (grin, wink, tongue out, head turns and more), with speed and streak bonuses and a saved high score.
 
 **Eye Comfort Test:** read for one minute while TrueDepth counts full and incomplete blinks and measures your longest stare. You get an eye comfort score and screen-habit tips.

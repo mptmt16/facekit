@@ -59,6 +59,19 @@ struct AnalyzeView: View {
                         }
                     }
 
+                    NavigationLink {
+                        CompareScansView()
+                    } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Before & after")
+                                Text("Compare two scans side by side").font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: "rectangle.on.rectangle").foregroundStyle(Theme.warm)
+                        }
+                    }
+
                     Button {
                         testingEyes = true
                     } label: {

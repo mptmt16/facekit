@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppTab: Hashable {
-    case today, exercises, analyze, progress
+    case today, exercises, analyze, progress, you
 }
 
 struct RootView: View {
@@ -22,6 +22,9 @@ struct RootView: View {
             TrendsView()
                 .tabItem { Label("Progress", systemImage: "chart.line.uptrend.xyaxis") }
                 .tag(AppTab.progress)
+            ProfileView()
+                .tabItem { Label("You", systemImage: "person") }
+                .tag(AppTab.you)
         }
         .fullScreenCover(isPresented: Binding(get: { !hasOnboarded }, set: { hasOnboarded = !$0 })) {
             OnboardingView { hasOnboarded = true }
