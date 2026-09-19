@@ -56,6 +56,23 @@ enum FaceSignal: Hashable {
         }
     }
 
+    /// Human-readable name for the muscle readouts during a session.
+    var displayName: String {
+        switch self {
+        case .shape(let shape):
+            return BlendShapeCatalog.name(for: shape)
+        case .pair(let left, _):
+            let name = BlendShapeCatalog.name(for: left)
+            return name.hasSuffix(" L") ? String(name.dropLast(2)) : name
+        case .yaw:
+            return "Head turn"
+        case .pitch:
+            return "Chin lift"
+        case .roll:
+            return "Head tilt"
+        }
+    }
+
     func value(in sample: FaceSample, baseline: HeadPose) -> Double {
         switch self {
         case .shape(let shape): sample.value(shape)
@@ -134,6 +151,28 @@ struct Pose: Hashable {
     }
 }
 
+enum ExerciseLevel: String, CaseIterable, Hashable {
+    case beginner, intermediate, advanced
+
+    var title: String { rawValue.capitalized }
+
+    var color: Color {
+        switch self {
+        case .beginner: Color(red: 0.35, green: 0.85, blue: 0.55)
+        case .intermediate: Theme.secondary
+        case .advanced: Color(red: 1.00, green: 0.45, blue: 0.45)
+        }
+    }
+
+    var bars: Int {
+        switch self {
+        case .beginner: 1
+        case .intermediate: 2
+        case .advanced: 3
+        }
+    }
+}
+
 struct Exercise: Identifiable, Hashable {
     let id: String
     let name: String
@@ -146,6 +185,7 @@ struct Exercise: Identifiable, Hashable {
     var holdSeconds: Double
     var reps: Int
     var restSeconds: Double = 2
+    var level: ExerciseLevel = .beginner
 
     var usesHeadPose: Bool {
         poses.contains { $0.requirements.contains { $0.signal.isHead } }

@@ -21,7 +21,7 @@ enum ExerciseLibrary {
                 Pose(cue: "Smile on your left side", requirements: [.atLeast(.shape(.mouthSmileLeft), 0.45)]),
                 Pose(cue: "Smile on your right side", requirements: [.atLeast(.shape(.mouthSmileRight), 0.45)]),
             ],
-            holdSeconds: 2, reps: 6
+            holdSeconds: 2, reps: 6, level: .intermediate
         ),
         Exercise(
             id: "cheek-puff", name: "Cheek Puff", category: .cheeks, symbol: "wind",
@@ -50,7 +50,7 @@ enum ExerciseLibrary {
                 Pose(cue: "Kiss", requirements: [.atLeast(.shape(.mouthPucker), 0.5)]),
                 Pose(cue: "Smile", requirements: [.atLeast(.pair(.mouthSmileLeft, .mouthSmileRight), 0.5)]),
             ],
-            holdSeconds: 1.5, reps: 8, restSeconds: 1
+            holdSeconds: 1.5, reps: 8, restSeconds: 1, level: .intermediate
         ),
         Exercise(
             id: "lip-roll", name: "Lip Roll", category: .mouth, symbol: "mouth.fill",
@@ -61,7 +61,7 @@ enum ExerciseLibrary {
                 .atLeast(.shape(.mouthRollLower), 0.35),
                 .atLeast(.shape(.mouthRollUpper), 0.3),
             ])],
-            holdSeconds: 3, reps: 6
+            holdSeconds: 3, reps: 6, level: .intermediate
         ),
 
         // MARK: Jaw & Tongue
@@ -82,7 +82,7 @@ enum ExerciseLibrary {
                 Pose(cue: "Jaw to the left", requirements: [.atLeast(.shape(.jawLeft), 0.25)]),
                 Pose(cue: "Jaw to the right", requirements: [.atLeast(.shape(.jawRight), 0.25)]),
             ],
-            holdSeconds: 2, reps: 6
+            holdSeconds: 2, reps: 6, level: .intermediate
         ),
         Exercise(
             id: "lion-stretch", name: "Lion Stretch", category: .jaw, symbol: "flame",
@@ -94,7 +94,7 @@ enum ExerciseLibrary {
                 .atLeast(.shape(.tongueOut), 0.25),
                 .atLeast(.pair(.eyeWideLeft, .eyeWideRight), 0.2),
             ])],
-            holdSeconds: 3, reps: 5, restSeconds: 3
+            holdSeconds: 3, reps: 5, restSeconds: 3, level: .advanced
         ),
 
         // MARK: Brows, Eyes & Nose
@@ -115,7 +115,7 @@ enum ExerciseLibrary {
             muscles: "Orbicularis oculi",
             steps: ["Squeeze both eyes shut.", "Listen for the voice cue to relax.", "Open gently."],
             poses: [Pose(cue: "Squeeze your eyes shut", requirements: [.atLeast(.pair(.eyeBlinkLeft, .eyeBlinkRight), 0.8)])],
-            holdSeconds: 3, reps: 6
+            holdSeconds: 3, reps: 6, level: .intermediate
         ),
         Exercise(
             id: "wide-eyes", name: "Wide Eyes", category: .upperFace, symbol: "eye",
@@ -123,7 +123,7 @@ enum ExerciseLibrary {
             muscles: "Levator palpebrae, frontalis",
             steps: ["Look straight ahead.", "Widen your eyes as far as possible.", "Hold without blinking."],
             poses: [Pose(cue: "Eyes wide open", requirements: [.atLeast(.pair(.eyeWideLeft, .eyeWideRight), 0.35)])],
-            holdSeconds: 3, reps: 6
+            holdSeconds: 3, reps: 6, level: .intermediate
         ),
         Exercise(
             id: "wink-control", name: "Wink Control", category: .upperFace, symbol: "eyes",
@@ -140,7 +140,7 @@ enum ExerciseLibrary {
                     .atMost(.shape(.eyeBlinkLeft), 0.35),
                 ]),
             ],
-            holdSeconds: 2, reps: 5
+            holdSeconds: 2, reps: 5, level: .advanced
         ),
         Exercise(
             id: "nose-scrunch", name: "Nose Scrunch", category: .upperFace, symbol: "nose",

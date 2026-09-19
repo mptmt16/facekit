@@ -27,4 +27,6 @@ enum SettingsKey {
     /// Comma-separated FaceRegion raw values.
     static let improvementGoals = "improvementGoals"
     static let saveFacePhoto = "saveFacePhoto"
+    /// Comma-separated exercise ids.
+    static let favouriteExercises = "favouriteExercises"
 }

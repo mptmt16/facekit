@@ -112,7 +112,18 @@ struct ExerciseHUD: View {
     }
 
     private var workCard: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
+            HStack {
+                Label("Form \(Int(min(1, engine.progress) * 100))%", systemImage: "checkmark.seal")
+                    .font(.caption.bold())
+                    .foregroundStyle(engine.progress >= 1 ? Theme.accent : Theme.warm)
+                Spacer()
+                if engine.isHolding {
+                    Label("Holding", systemImage: "timer")
+                        .font(.caption.bold())
+                        .foregroundStyle(Theme.accent)
+                }
+            }
             Text(engine.phase == .rest ? "Relax" : engine.currentPose.cue)
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
@@ -133,6 +144,10 @@ struct ExerciseHUD: View {
                 Spacer(minLength: 0)
             }
 
+            if engine.phase == .active, !engine.muscles.isEmpty {
+                muscleReadouts
+            }
+
             HStack(spacing: 5) {
                 ForEach(0..<engine.exercise.reps, id: \.self) { rep in
                     Capsule()
@@ -143,6 +158,39 @@ struct ExerciseHUD: View {
         }
         .padding(20)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    /// Live bars for the muscles that must work and the ones that must stay relaxed.
+    private var muscleReadouts: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            ForEach(engine.muscles) { muscle in
+                HStack(spacing: 8) {
+                    Image(systemName: muscle.isPrimary ? "bolt.fill" : "leaf")
+                        .font(.caption2)
+                        .foregroundStyle(muscle.isPrimary ? Theme.accent : Theme.secondary)
+                    Text(muscle.name)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .frame(width: 92, alignment: .leading)
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.12))
+                            Capsule()
+                                .fill(muscle.isPrimary ? Theme.accent : Theme.warm)
+                                .frame(width: proxy.size.width * muscle.fraction)
+                        }
+                    }
+                    .frame(height: 6)
+                    Text("\(Int(muscle.fraction * 100))%")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 34, alignment: .trailing)
+                }
+            }
+            Text("Bolt = work this muscle · leaf = keep this one relaxed")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var activationRing: some View {

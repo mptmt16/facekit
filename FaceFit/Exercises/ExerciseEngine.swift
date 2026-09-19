@@ -12,6 +12,23 @@ struct ExerciseResult: Identifiable {
     let symmetry: Double?
 }
 
+/// One muscle signal shown live during a session.
+struct MuscleReadout: Identifiable, Equatable {
+    let id: String
+    let name: String
+    /// Current value of the signal (0...1 for blend shapes, degrees for head angles).
+    let value: Double
+    let target: Double
+    /// True for muscles that must work, false for muscles that must stay relaxed.
+    let isPrimary: Bool
+
+    /// 0...1 of the way to the goal.
+    var fraction: Double {
+        guard target != 0 else { return 0 }
+        return Swift.min(1, Swift.max(0, value / target))
+    }
+}
+
 /// Turns a stream of face samples into countdown → hold → rep → rest → finished.
 @Observable
 final class ExerciseEngine {
@@ -45,6 +62,8 @@ final class ExerciseEngine {
     private(set) var holdProgress: Double = 0
     private(set) var isHolding = false
     private(set) var symmetry: Double?
+    /// Live per-muscle values for the current pose.
+    private(set) var muscles: [MuscleReadout] = []
     private(set) var countdown = Int(ExerciseEngine.getReadySeconds)
     private(set) var restRemaining: TimeInterval = 0
     private(set) var faceVisible = true
@@ -128,6 +147,16 @@ final class ExerciseEngine {
         let value = pose.progress(in: sample, baseline: baseline, difficulty: difficulty)
         progress = value
         symmetry = pose.symmetry(in: sample)
+        muscles = pose.requirements.enumerated().map { index, requirement in
+            let primary = requirement.mode == .above
+            return MuscleReadout(
+                id: "\(index)-\(requirement.signal.displayName)",
+                name: requirement.signal.displayName,
+                value: requirement.signal.value(in: sample, baseline: baseline),
+                target: primary ? requirement.target * difficulty : requirement.target / difficulty,
+                isPrimary: primary
+            )
+        }
 
         let threshold = isHolding ? Self.holdTolerance : 1.0
         guard value >= threshold else {

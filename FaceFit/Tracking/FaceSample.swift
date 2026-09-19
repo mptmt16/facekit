@@ -163,4 +163,16 @@ enum BlendShapeCatalog {
     ]
 
     static let allShapes: [BlendShape] = groups.flatMap { $0.entries.map(\.shape) }
+
+    private static let names: [BlendShape: String] = {
+        var table: [BlendShape: String] = [:]
+        for group in groups {
+            for entry in group.entries { table[entry.shape] = entry.name }
+        }
+        return table
+    }()
+
+    static func name(for shape: BlendShape) -> String {
+        names[shape] ?? shape.rawValue
+    }
 }

@@ -159,8 +159,26 @@ struct PrimaryButtonStyle: ButtonStyle {
     }
 }
 
+struct LevelBadge: View {
+    let level: ExerciseLevel
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<3, id: \.self) { index in
+                Capsule()
+                    .fill(index < level.bars ? level.color : Color.white.opacity(0.18))
+                    .frame(width: 3, height: 5 + CGFloat(index) * 3)
+            }
+            Text(level.title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(level.color)
+        }
+    }
+}
+
 struct ExerciseRow: View {
     let exercise: Exercise
+    var isFavourite = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -174,8 +192,14 @@ struct ExerciseRow: View {
                 Text("\(exercise.reps) reps · \(exercise.holdSeconds.formatted())s hold · \(exercise.estimatedDuration.clockString)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                LevelBadge(level: exercise.level)
             }
             Spacer(minLength: 0)
+            if isFavourite {
+                Image(systemName: "star.fill")
+                    .font(.caption)
+                    .foregroundStyle(Theme.warm)
+            }
         }
     }
 }

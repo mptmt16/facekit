@@ -84,6 +84,18 @@ struct ExerciseDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if ExerciseDemoView.isAvailable {
+                ZStack(alignment: .bottomTrailing) {
+                    ExerciseDemoView(exercise: exercise)
+                        .frame(height: 230)
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    Label("3D demo", systemImage: "play.circle")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                }
+            }
             HStack(spacing: 16) {
                 Image(systemName: exercise.symbol)
                     .font(.system(size: 34))
@@ -92,9 +104,12 @@ struct ExerciseDetailView: View {
                     .background(exercise.category.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 VStack(alignment: .leading, spacing: 4) {
                     Text(exercise.name).font(.title2.bold())
-                    Label(exercise.category.title, systemImage: exercise.category.symbol)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Label(exercise.category.title, systemImage: exercise.category.symbol)
+                        LevelBadge(level: exercise.level)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
             Text(exercise.summary)
