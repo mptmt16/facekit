@@ -22,7 +22,7 @@ struct ImprovementPlan {
     /// - Parameters:
     ///   - scores: per-area scores from the latest scan (empty if the user hasn't scanned).
     ///   - goals: areas the user wants to improve; they get extra priority.
-    static func build(scores: [RegionScore], goals: Set<FaceRegion>) -> ImprovementPlan {
+    static func build(scores: [RegionScore], goals: Set<FaceRegion>, playerLevel: Int = 99) -> ImprovementPlan {
         var need: [FaceRegion: Double] = [:]
         for item in scores {
             guard let score = item.score else { continue }
@@ -44,14 +44,16 @@ struct ImprovementPlan {
         for region in focus {
             var added = 0
             for id in region.exerciseIDs {
-                guard added < 2, !used.contains(id), let exercise = ExerciseLibrary.exercise(id: id) else { continue }
+                guard added < 2, !used.contains(id), let exercise = ExerciseLibrary.exercise(id: id),
+                      Progression.isUnlocked(exercise, playerLevel: playerLevel) else { continue }
                 items.append(Item(exercise: exercise.with(reps: Swift.min(exercise.reps, 6)), region: region))
                 used.insert(id)
                 added += 1
             }
         }
 
-        if !items.isEmpty, !used.contains("soft-face"), let coolDown = ExerciseLibrary.exercise(id: "soft-face") {
+        if !items.isEmpty, !used.contains("soft-face"), let coolDown = ExerciseLibrary.exercise(id: "soft-face"),
+           Progression.isUnlocked(coolDown, playerLevel: playerLevel) {
             items.append(Item(exercise: coolDown.with(reps: 2), region: nil))
         }
         return ImprovementPlan(focus: Array(focus), items: items)

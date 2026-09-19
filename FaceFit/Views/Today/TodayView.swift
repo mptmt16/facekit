@@ -9,6 +9,7 @@ struct TodayView: View {
     @Query(sort: \FaceScan.date, order: .reverse) private var scans: [FaceScan]
     @Query(sort: \BlinkTest.date, order: .reverse) private var blinkTests: [BlinkTest]
     @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
+    @AppStorage(SettingsKey.challengeGames) private var challengeGames = 0
     @AppStorage(SettingsKey.improvementGoals) private var goalsRaw = ""
     @AppStorage(ProfileKey.name) private var profileName = ""
     @AppStorage(ProfileKey.age) private var profileAge = 0
@@ -29,6 +30,10 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     header
+                    PlayerLevelCard(xp: totalXP,
+                                    todayXP: Progression.xpEarned(on: .now, sessions: sessions, scans: scans, blinkTests: blinkTests),
+                                    streak: sessions.streak)
+                    QuestsCard(quests: todaysQuests)
                     planCard
                     routineCard
                     statsRow
@@ -67,11 +72,23 @@ struct TodayView: View {
         }
     }
 
+    private var totalXP: Int {
+        Progression.totalXP(sessions: sessions, scans: scans, blinkTests: blinkTests,
+                            challengeGames: challengeGames, challengeHighScore: challengeHighScore)
+    }
+
+    private var playerLevel: Int { Progression.level(forXP: totalXP) }
+
+    private var todaysQuests: [QuestProgress] {
+        let quests = DailyQuests.quests(for: .now, playerLevel: playerLevel)
+        return DailyQuests.progress(for: quests, on: .now, sessions: sessions, scans: scans, blinkTests: blinkTests)
+    }
+
     @ViewBuilder
     private var planCard: some View {
         let goals = GoalStore.decode(goalsRaw)
         let scores = scans.first.map { RegionScorer.scores(for: $0) } ?? []
-        let plan = ImprovementPlan.build(scores: scores, goals: goals)
+        let plan = ImprovementPlan.build(scores: scores, goals: goals, playerLevel: playerLevel)
 
         if plan.items.isEmpty {
             if scans.isEmpty && goals.isEmpty {

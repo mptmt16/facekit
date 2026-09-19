@@ -179,20 +179,36 @@ struct LevelBadge: View {
 struct ExerciseRow: View {
     let exercise: Exercise
     var isFavourite = false
+    var mastery: Progression.Mastery = .none
+    var isLocked = false
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: exercise.symbol)
+            Image(systemName: isLocked ? "lock.fill" : exercise.symbol)
                 .font(.title3)
-                .foregroundStyle(exercise.category.color)
+                .foregroundStyle(isLocked ? Color.secondary : exercise.category.color)
                 .frame(width: 44, height: 44)
-                .background(exercise.category.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background((isLocked ? Color.white : exercise.category.color).opacity(0.15),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
-                Text(exercise.name).font(.headline)
-                Text("\(exercise.reps) reps · \(exercise.holdSeconds.formatted())s hold · \(exercise.estimatedDuration.clockString)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                LevelBadge(level: exercise.level)
+                Text(exercise.name)
+                    .font(.headline)
+                    .foregroundStyle(isLocked ? Color.secondary : Color.primary)
+                if isLocked {
+                    Text("Unlocks at level \(Progression.unlockLevel(for: exercise.id))")
+                        .font(.caption)
+                        .foregroundStyle(Theme.warm)
+                } else {
+                    Text("\(exercise.reps) reps · \(exercise.holdSeconds.formatted())s hold · \(exercise.estimatedDuration.clockString)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                HStack(spacing: 8) {
+                    LevelBadge(level: exercise.level)
+                    if !isLocked, mastery != .none {
+                        MasteryStars(mastery: mastery, compact: true)
+                    }
+                }
             }
             Spacer(minLength: 0)
             if isFavourite {

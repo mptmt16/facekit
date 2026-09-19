@@ -50,6 +50,15 @@ Everything runs on the device. No images or face data leave the phone.
   It also gives the **upper facial index** (nasion–stomion, from euryene to leptene). Landmarks are found automatically on the 3D mesh: nasion is the deepest point of the midline profile between the brows, menton is the lowest point of the chin, stomion is the centre of the mouth opening, and bizygomatic width is the widest point between nose-tip and eye level. Other 3D measurements, in mm, are jaw, forehead and mouth width, eye width, the gap between your eyes, and nose projection. Labels like oval, heart or square are fashion terms with no scientific definition, so the app doesn't use them.
 - **Color 3D face:** during the relaxed step of the scan, one camera frame is projected onto the mesh (like Apple's video-textured face sample), and the eye and mouth openings are capped. You get a real-color 3D model to rotate and zoom, with a switch to the symmetry heat map. It is stored only on the device, and you can turn it off in Settings.
 
+**Game progression**
+- **XP** from every rep (5 each), finished exercises (+20), full-target form (+10), scans (80), eye tests (40) and Face Challenge games
+- **Levels** with rank names (Rookie → Trainee → Regular → Athlete → Pro → Master); level *n* needs `150 x (n-1)^1.5` XP
+- **Exercises unlock as you level up.** You start with 4 (Smile Lift, Brow Raise, Jaw Opener, Soft Face) and the rest arrive up to level 9; programs unlock between levels 2 and 7. Locked exercises stay out of your plan and the daily workout.
+- **Journey map** showing every level, what it unlocks and where you are
+- **Daily quests:** three a day from a pool (reps, mixed exercises, XP, perfect form, scan, eye test, per-area goals), worth 40–80 bonus XP, with progress read from your history
+- **Mastery stars** per exercise at 20, 60 and 150 total reps
+- **Daily XP goal** of 150, plus level-up and unlock celebrations on the session summary
+
 **Skin Analysis (on-device)**
 - Splits the TrueDepth mesh into six zones (forehead, nose, both cheeks, under-eye, chin) and maps them onto the scan photo, excluding eyes, brows and lips
 - Counts **blemishes** (reddish) and **dark spots** (not red) as local-contrast peaks, skipping very dark areas so hair and shadow don't count, and counts **fine lines** as elongated ridge components

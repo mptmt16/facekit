@@ -1,10 +1,24 @@
 import SwiftUI
+import SwiftData
 
 struct ExerciseListView: View {
+    @Query private var sessions: [ExerciseSession]
+    @Query private var scans: [FaceScan]
+    @Query private var blinkTests: [BlinkTest]
+    @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
+    @AppStorage(SettingsKey.challengeGames) private var challengeGames = 0
     @AppStorage(SettingsKey.favouriteExercises) private var favouritesRaw = ""
+
     @State private var searchText = ""
     @State private var levelFilter: ExerciseLevel?
     @State private var routineRunning = false
+    @State private var lockedExercise: Exercise?
+
+    private var playerLevel: Int {
+        Progression.level(forXP: Progression.totalXP(sessions: sessions, scans: scans, blinkTests: blinkTests,
+                                                     challengeGames: challengeGames,
+                                                     challengeHighScore: challengeHighScore))
+    }
 
     private var favourites: Set<String> {
         Set(favouritesRaw.split(separator: ",").map(String.init))
@@ -29,6 +43,24 @@ struct ExerciseListView: View {
             List {
                 if !isFiltering {
                     Section {
+                        NavigationLink {
+                            JourneyView()
+                        } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "map.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.black)
+                                    .frame(width: 44, height: 44)
+                                    .background(Theme.warm, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Your journey").font(.headline)
+                                    Text("Level \(playerLevel) · \(Progression.unlocked(playerLevel: playerLevel).count) of \(ExerciseLibrary.all.count) exercises unlocked")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+
                         Button {
                             routineRunning = true
                         } label: {
@@ -40,7 +72,7 @@ struct ExerciseListView: View {
                                     .background(Theme.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("Daily Face Workout").font(.headline)
-                                    Text("\(ExerciseLibrary.dailyRoutine.count) exercises · about \(ExerciseLibrary.dailyRoutineDuration.clockString) min")
+                                    Text("\(dailyRoutine.count) exercises · about \(dailyRoutineDuration.clockString) min")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -53,19 +85,34 @@ struct ExerciseListView: View {
 
                     Section("Programs") {
                         ForEach(ProgramLibrary.all) { program in
-                            NavigationLink {
-                                ProgramDetailView(program: program)
-                            } label: {
-                                ProgramRow(program: program)
+                            let required = Progression.unlockLevel(forProgram: program.id)
+                            if playerLevel >= required {
+                                NavigationLink {
+                                    ProgramDetailView(program: program)
+                                } label: {
+                                    ProgramRow(program: program)
+                                }
+                            } else {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 44, height: 44)
+                                        .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(program.name).font(.headline).foregroundStyle(.secondary)
+                                        Text("Unlocks at level \(required)")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.warm)
+                                    }
+                                }
                             }
                         }
                     }
 
                     let saved = ExerciseLibrary.all.filter { favourites.contains($0.id) }
                     if !saved.isEmpty {
-                        Section("Favourites") {
-                            rows(saved)
-                        }
+                        Section("Favourites") { rows(saved) }
                     }
                 }
 
@@ -101,26 +148,55 @@ struct ExerciseListView: View {
                 }
             }
             .fullScreenCover(isPresented: $routineRunning) {
-                ExerciseSessionView(exercises: ExerciseLibrary.dailyRoutine)
+                ExerciseSessionView(exercises: dailyRoutine)
+            }
+            .alert("Locked", isPresented: Binding(get: { lockedExercise != nil },
+                                                  set: { if !$0 { lockedExercise = nil } })) {
+                Button("OK", role: .cancel) { lockedExercise = nil }
+            } message: {
+                if let lockedExercise {
+                    Text("\(lockedExercise.name) unlocks at level \(Progression.unlockLevel(for: lockedExercise.id)). Keep training to earn XP — you're on level \(playerLevel).")
+                }
             }
         }
     }
 
+    /// The daily workout only uses exercises you've unlocked.
+    private var dailyRoutine: [Exercise] {
+        let unlocked = ExerciseLibrary.dailyRoutine.filter { Progression.isUnlocked($0, playerLevel: playerLevel) }
+        return unlocked.isEmpty ? Array(Progression.unlocked(playerLevel: playerLevel).prefix(3)) : unlocked
+    }
+
+    private var dailyRoutineDuration: TimeInterval {
+        dailyRoutine.reduce(0) { $0 + $1.estimatedDuration }
+    }
+
     private func rows(_ items: [Exercise]) -> some View {
         ForEach(items) { exercise in
-            NavigationLink {
-                ExerciseDetailView(exercise: exercise)
-            } label: {
-                ExerciseRow(exercise: exercise, isFavourite: favourites.contains(exercise.id))
-            }
-            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                Button {
-                    toggleFavourite(exercise.id)
+            let unlocked = Progression.isUnlocked(exercise, playerLevel: playerLevel)
+            let mastery = Progression.mastery(reps: Progression.reps(for: exercise.id, in: sessions))
+            if unlocked {
+                NavigationLink {
+                    ExerciseDetailView(exercise: exercise)
                 } label: {
-                    Label(favourites.contains(exercise.id) ? "Unsave" : "Save",
-                          systemImage: favourites.contains(exercise.id) ? "star.slash" : "star")
+                    ExerciseRow(exercise: exercise, isFavourite: favourites.contains(exercise.id), mastery: mastery)
                 }
-                .tint(Theme.warm)
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    Button {
+                        toggleFavourite(exercise.id)
+                    } label: {
+                        Label(favourites.contains(exercise.id) ? "Unsave" : "Save",
+                              systemImage: favourites.contains(exercise.id) ? "star.slash" : "star")
+                    }
+                    .tint(Theme.warm)
+                }
+            } else {
+                Button {
+                    lockedExercise = exercise
+                } label: {
+                    ExerciseRow(exercise: exercise, isLocked: true)
+                }
+                .buttonStyle(.plain)
             }
         }
     }

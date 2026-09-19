@@ -1,8 +1,15 @@
 import SwiftUI
+import SwiftData
 
 /// Personal routine built from the scan's weakest areas plus the user's goals.
 struct ImprovementPlanCard: View {
     let scores: [RegionScore]
+
+    @Query private var sessions: [ExerciseSession]
+    @Query private var scans: [FaceScan]
+    @Query private var blinkTests: [BlinkTest]
+    @AppStorage(SettingsKey.challengeHighScore) private var challengeHighScore = 0
+    @AppStorage(SettingsKey.challengeGames) private var challengeGames = 0
 
     @AppStorage(SettingsKey.improvementGoals) private var goalsRaw = ""
     @State private var running = false
@@ -10,7 +17,10 @@ struct ImprovementPlanCard: View {
 
     var body: some View {
         let goals = GoalStore.decode(goalsRaw)
-        let plan = ImprovementPlan.build(scores: scores, goals: goals)
+        let playerLevel = Progression.level(forXP: Progression.totalXP(
+            sessions: sessions, scans: scans, blinkTests: blinkTests,
+            challengeGames: challengeGames, challengeHighScore: challengeHighScore))
+        let plan = ImprovementPlan.build(scores: scores, goals: goals, playerLevel: playerLevel)
 
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
