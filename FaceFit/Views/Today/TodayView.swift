@@ -294,6 +294,17 @@ struct TodayView: View {
                 .buttonStyle(.plain)
 
                 HStack(spacing: 8) {
+                    if let skin = latest.skin {
+                        VStack(spacing: 4) {
+                            Text("\(Int(skin.overall.rounded()))")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(Theme.color(forScore: skin.overall))
+                            Text("Skin")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
                     ForEach(FacePillar.allCases) { pillar in
                         VStack(spacing: 4) {
                             Text(breakdown.value(for: pillar).map { "\(Int($0.rounded()))" } ?? "–")

@@ -51,6 +51,7 @@ final class FaceScanEngine {
     // Color 3D face
     @ObservationIgnored private var texture: FaceTexture?
     @ObservationIgnored private var textureJPEG: Data?
+    @ObservationIgnored private var skin: SkinReport?
 
     init(steps: [ScanStep] = ScanStep.standard) {
         self.steps = steps
@@ -59,6 +60,10 @@ final class FaceScanEngine {
     func attachTexture(_ texture: FaceTexture, jpeg: Data) {
         self.texture = texture
         textureJPEG = jpeg
+    }
+
+    func attachSkin(_ report: SkinReport) {
+        skin = report
     }
 
     var currentStep: ScanStep { steps[min(stepIndex, steps.count - 1)] }
@@ -272,7 +277,8 @@ final class FaceScanEngine {
             tension: tension.sorted { $0.excess > $1.excess },
             mesh: mesh,
             texture: texture,
-            textureJPEG: textureJPEG
+            textureJPEG: textureJPEG,
+            skin: skin
         )
     }
 }

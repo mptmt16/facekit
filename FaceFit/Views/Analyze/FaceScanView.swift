@@ -159,6 +159,11 @@ struct FaceScanView: View {
             guard saveFacePhoto, case .neutral = step.kind else { return }
             tracker.captureTexture { texture, jpeg in
                 engine.attachTexture(texture, jpeg: jpeg)
+                // Skin analysis is heavy, so it runs off the main thread while the scan continues.
+                Task.detached(priority: .userInitiated) {
+                    guard let report = SkinAnalyzer.analyze(jpeg: jpeg, texture: texture) else { return }
+                    await MainActor.run { applySkin(report) }
+                }
             }
         }
         engine.onFinished = { outcome in
@@ -167,6 +172,17 @@ struct FaceScanView: View {
             save(outcome)
         }
         tracker.start()
+    }
+
+    @MainActor
+    private func applySkin(_ report: SkinReport) {
+        if let savedScan {
+            // The scan was already saved, so attach the skin results to it.
+            savedScan.setSkin(report)
+            try? modelContext.save()
+        } else {
+            engine.attachSkin(report)
+        }
     }
 
     private func save(_ outcome: ScanOutcome) {

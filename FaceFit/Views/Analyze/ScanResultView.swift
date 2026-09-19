@@ -17,6 +17,7 @@ struct ScanResultView: View {
         let controls = scan.controls
         let mesh = scan.mesh
         let regionScores = RegionScorer.scores(for: scan)
+        let skin = scan.skin
         let shapeReport = mesh.flatMap { FaceShapeAnalyzer.report(for: $0) }
 
         ScrollView {
@@ -25,8 +26,15 @@ struct ScanResultView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 FaceScoreCard(breakdown: scan.breakdown, previous: previousScan?.breakdown, date: scan.date)
+                if let skin {
+                    SkinScoreCard(report: skin)
+                }
                 RegionScoresCard(scores: regionScores)
                 ImprovementPlanCard(scores: regionScores)
+                if let skin {
+                    SkinZonesCard(report: skin)
+                    SkinTipsCard(report: skin)
+                }
                 FaceShapeCard(report: shapeReport)
                 meshCard(mesh)
                 expressionsCard(expressions)

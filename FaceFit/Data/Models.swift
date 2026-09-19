@@ -50,6 +50,7 @@ final class FaceScan {
     /// JPEG photo and JSON mesh for the color 3D face.
     @Attribute(.externalStorage) var textureImageData: Data?
     @Attribute(.externalStorage) var textureMeshData: Data?
+    @Attribute(.externalStorage) var skinData: Data?
 
     init(outcome: ScanOutcome, date: Date = .now) {
         self.date = date
@@ -69,6 +70,16 @@ final class FaceScan {
         meshData = outcome.mesh.flatMap { try? encoder.encode($0) }
         textureImageData = outcome.textureJPEG
         textureMeshData = outcome.texture.flatMap { try? encoder.encode($0) }
+        skinData = outcome.skin.flatMap { try? encoder.encode($0) }
+    }
+
+    var skin: SkinReport? {
+        guard let skinData else { return nil }
+        return try? JSONDecoder().decode(SkinReport.self, from: skinData)
+    }
+
+    func setSkin(_ report: SkinReport) {
+        skinData = try? JSONEncoder().encode(report)
     }
 
     var texture: FaceTexture? {

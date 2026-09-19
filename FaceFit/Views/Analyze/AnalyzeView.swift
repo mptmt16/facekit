@@ -25,6 +25,7 @@ struct AnalyzeView: View {
                             }
                         }
                         VStack(alignment: .leading, spacing: 8) {
+                            Label("Skin scan: blemishes, dark spots, fine lines, tone and texture", systemImage: "sparkles")
                             Label("Face Score with level and progress since last scan", systemImage: "gauge.with.dots.needle.67percent")
                             Label("Scores for jawline, cheeks, lips, eyes and forehead", systemImage: "list.bullet.rectangle")
                             Label("A personal exercise plan for your weakest areas", systemImage: "target")

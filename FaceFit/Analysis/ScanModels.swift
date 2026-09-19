@@ -73,6 +73,8 @@ struct ScanOutcome {
     /// Color 3D face captured during the relaxed step, if enabled.
     var texture: FaceTexture?
     var textureJPEG: Data?
+    /// On-device skin analysis of the scan photo.
+    var skin: SkinReport?
 }
 
 /// One guided step of the face scan.

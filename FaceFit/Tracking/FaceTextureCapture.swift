@@ -9,6 +9,9 @@ struct FaceTexture: Codable {
     /// Flattened u, v per vertex in 0...1, origin at the top-left of the stored image.
     var uvs: [Float]
     var indices: [Int16]
+    /// Counts before the eye and mouth openings were capped, so analysis can use the original mesh.
+    var baseVertexCount: Int?
+    var baseIndexCount: Int?
 
     var vertexCount: Int { vertices.count / 3 }
 }
@@ -94,7 +97,9 @@ enum FaceTextureCapture {
             }
         }
 
-        return (FaceTexture(vertices: vertices, uvs: uvs, indices: indices), jpeg)
+        let texture = FaceTexture(vertices: vertices, uvs: uvs, indices: indices,
+                                  baseVertexCount: meshVertices.count, baseIndexCount: meshIndices.count)
+        return (texture, jpeg)
     }
 
     private static func width(of loop: [Int], in vertices: [SIMD3<Float>]) -> Float {
